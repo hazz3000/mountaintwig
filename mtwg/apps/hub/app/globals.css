@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --orange: #FF6A00;
+  --purple: #6A1B9A;
+  --purple-light: #9C27B0;
+  --dark: #111111;
+  --dark-surface: #1A1A2E;
+}
+
+@layer base {
+  body {
+    @apply bg-neutral-950 text-neutral-100 antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-orange-500 hover:bg-orange-400 active:scale-95
+           text-white font-semibold px-5 py-2.5 rounded-xl
+           transition-all duration-150 cursor-pointer;
+  }
+  .btn-secondary {
+    @apply bg-neutral-800 hover:bg-neutral-700 active:scale-95
+           text-neutral-100 font-semibold px-5 py-2.5 rounded-xl
+           transition-all duration-150 cursor-pointer;
+  }
+  .card {
+    @apply bg-neutral-900 border border-neutral-800 rounded-2xl p-5;
+  }
+  .coin-badge {
+    @apply inline-flex items-center gap-1.5 bg-orange-500/10
+           text-orange-400 text-sm font-semibold px-3 py-1 rounded-full
+           border border-orange-500/20;
+  }
+}

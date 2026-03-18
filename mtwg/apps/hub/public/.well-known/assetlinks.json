@@ -1,0 +1,26 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace":              "android_app",
+      "package_name":           "games.mountaintwig.hub",
+      "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT_HERE"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace":              "android_app",
+      "package_name":           "games.mountaintwig.game01",
+      "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT_HERE"]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace":              "android_app",
+      "package_name":           "games.mountaintwig.game02",
+      "sha256_cert_fingerprints": ["YOUR_SHA256_FINGERPRINT_HERE"]
+    }
+  }
+]

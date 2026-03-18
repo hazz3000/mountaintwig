@@ -1,0 +1,26 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "TEAMID.games.mountaintwig.hub",
+          "TEAMID.games.mountaintwig.game01",
+          "TEAMID.games.mountaintwig.game02"
+        ],
+        "components": [
+          { "/": "/hub/*"    },
+          { "/": "/game01/*" },
+          { "/": "/game02/*" },
+          { "/": "/r/*"      },
+          { "/": "/refer/*"  }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAMID.games.mountaintwig.hub"
+    ]
+  }
+}

@@ -1,0 +1,141 @@
+# Mountain Twig Games — Cursor Rules
+# This file gives the AI full context about the project.
+# Read this before making any edits.
+
+## What this is
+A multi-game mobile platform built by a solo developer.
+Each game is a standalone Capacitor app (iOS + Android).
+All games share one Supabase backend, one coin wallet, and one referral engine.
+Cross-promotion between games is the core growth mechanic.
+
+## Company
+Mountain Twig Games
+Domain: mountaintwìggames.com
+Bundle ID prefix: games.mountaintwig
+
+## Stack — never suggest alternatives to these
+- Monorepo: Turborepo + pnpm workspaces
+- Hub frontend: Next.js 14 (App Router) + Tailwind CSS
+- Backend: Next.js API routes (no separate server)
+- Database: Supabase Postgres + Drizzle ORM
+- Auth: Supabase Auth (email + Google)
+- Cache: Upstash Redis
+- Games: Phaser 3 + TypeScript + Vite
+- Mobile: Capacitor (one app per game)
+- Deep links: Branch.io
+- Analytics: Amplitude
+- Deploy: Vercel (hub), Capacitor (games)
+- Language: TypeScript everywhere, strict mode
+
+## Monorepo structure
+apps/hub          — Next.js platform hub (wallet, catalog, profile, referral)
+apps/game-01      — First game (Phaser 3 + Capacitor)
+apps/game-02      — Second game (same scaffold)
+packages/sdk      — @mtwg/sdk — imported by every game
+packages/types    — @mtwg/types — all shared TypeScript interfaces
+packages/db       — @mtwg/db — Drizzle schema + client
+packages/game-scaffold — template copied for each new game
+
+## Critical rules — never break these
+
+### 1. Idempotency key on every coin grant
+Every call to /api/rewards/grant must include idempotency_key.
+Format: `{reason}-{userId}-{contextId}`
+Example: `level_complete-abc123-level-5`
+The unique constraint on reward_ledger.idempotency_key prevents duplicates.
+
+### 2. Ledger before balance — always
+reward_ledger INSERT must happen before wallets UPDATE in the same transaction.
+Never update wallet balance without a ledger entry.
+Never UPDATE or DELETE reward_ledger rows — append only.
+
+### 3. Two Redis clusters
+session Redis — auth tokens, session state
+ad Redis — frequency caps, campaign pacing
+Never use session Redis in ad-related code and vice versa.
+
+### 4. SDK auth is direct Supabase — not postMessage
+Games authenticate directly via @supabase/supabase-js in the SDK.
+There is no iframe. Each game is its own native Capacitor app.
+Never suggest iframe or postMessage patterns.
+
+### 5. Deep links via Branch.io only
+Cross-promo attribution uses Branch.io deferred deep links.
+apple-app-site-association lives at apps/hub/public/.well-known/
+Never suggest custom deep link implementations.
+
+### 6. App store compliance
+Each game is a separate App Store submission.
+Games must never load executable code from remote URLs at runtime.
+Cross-promotion opens Branch.io deep links — not iframes or webviews loading other apps.
+
+## Database schema (key tables)
+users           — mirrors Supabase auth.users, one row per player
+wallets         — one row per player, softBalance = current coins
+reward_ledger   — append-only, every earn/spend, unique idempotency_key
+games           — game catalog, slug matches SDK game ID
+user_games      — tracks which games a player has installed (for ad filtering)
+campaigns       — cross-promo campaigns, budgetCoins/spentCoins tracked
+referrals       — referral codes, one per user, resolved on first install
+
+## API routes (all in apps/hub/app/api/)
+POST /api/auth/register          — ensure user + wallet exist (called by SDK init)
+GET  /api/wallet                 — balance + recent ledger
+POST /api/rewards/grant          — ledger-first coin grant, idempotent
+POST /api/rewards/daily-login    — daily streak claim, Upstash Redis TTL
+GET  /api/ads                    — best cross-promo campaign for this player/game
+POST /api/events                 — track game event to Amplitude + platform
+GET  /api/referral/my-code       — get/create referral code + share URL
+POST /api/referral/resolve       — resolve referral, grant coins to both parties
+POST /api/referral/resolve-crosspromo — resolve cross-promo install attribution
+
+## SDK usage pattern (every game uses this)
+import { createMTWG } from '@mtwg/sdk'
+const mtwg = createMTWG('game-01')
+const { userId, balance } = await mtwg.init()
+await mtwg.grantCoins('level_complete', 50, `level_complete-${userId}-level-5`)
+const ad = await mtwg.getAd()
+
+## Coin earn rates
+install_reward:    500 coins
+first_session:     200 coins
+level_complete:     50 coins
+daily_login:       100 coins
+streak_bonus day3: 300 coins
+streak_bonus day7: 1000 coins
+referral_install:  750 coins (referrer) + 250 coins (new player)
+
+## Code style
+- TypeScript strict mode always
+- Zod for all API request validation
+- No any types unless absolutely unavoidable with a comment explaining why
+- Error handling: catch Postgres error code 23505 for idempotency duplicates
+- All API routes return NextResponse.json()
+- Use drizzle-orm query builder — no raw SQL except for sql template literals
+- Tailwind for all hub styling — no CSS modules, no styled-components
+- Dark theme: bg-neutral-950 base, bg-neutral-900 cards, text-neutral-100
+- Brand orange: #FF6A00, brand purple: #6A1B9A
+
+## Week by week build status
+Week 1: Monorepo scaffold, DB schema, SDK skeleton, hub shell — IN PROGRESS
+Week 2: Identity + wallet + coin grant
+Week 3: SDK + Branch.io + Capacitor scaffold
+Week 4-5: Game #1 build + mobile
+Week 6: Cross-promo engine
+Week 7: Referral engine
+Week 8: Rewards UI + daily streak
+Week 9: Game #2
+Week 10: App Store submissions
+
+## Environment variables (never hardcode these)
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_KEY
+DATABASE_URL
+UPSTASH_REDIS_REST_URL
+UPSTASH_REDIS_REST_TOKEN
+NEXT_PUBLIC_AMPLITUDE_KEY
+NEXT_PUBLIC_BRANCH_KEY
+BRANCH_SECRET
+NEXT_PUBLIC_APP_URL
+MTWG_API_URL

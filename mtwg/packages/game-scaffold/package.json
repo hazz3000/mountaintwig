@@ -1,0 +1,27 @@
+{
+  "name": "@mtwg/game-scaffold",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev":       "vite",
+    "build":     "tsc && vite build",
+    "typecheck": "tsc --noEmit",
+    "cap:sync":  "npx cap sync",
+    "cap:ios":   "npx cap open ios",
+    "cap:android": "npx cap open android"
+  },
+  "dependencies": {
+    "phaser":               "^3.80.0",
+    "@mtwg/sdk":            "workspace:*",
+    "@mtwg/types":          "workspace:*",
+    "@supabase/supabase-js": "^2.43.0",
+    "@capacitor/core":      "^6.0.0",
+    "@capacitor/app":       "^6.0.0",
+    "@capacitor/preferences": "^6.0.0"
+  },
+  "devDependencies": {
+    "vite":       "^5.2.0",
+    "typescript": "^5.4.0",
+    "@capacitor/cli": "^6.0.0"
+  }
+}
