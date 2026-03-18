@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTWG Test Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #111111;
+      color: #ffffff;
+      font-family: system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #FF6A00;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    /* ── Auth section ── */
+    #auth-section input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    #auth-section input:focus {
+      border-color: #FF6A00;
+    }
+
+    /* ── Game section ── */
+    #game-section { display: none; }
+
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 48px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .coin-value {
+      color: #FF6A00;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-box {
+      background: #222;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    /* ── Tap button ── */
+    #tap-btn {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: #FF6A00;
+      border: none;
+      color: white;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: transform 0.08s, background 0.08s;
+      margin: 0 auto 24px;
+      display: block;
+      box-shadow: 0 0 0 0 rgba(255, 106, 0, 0.4);
+    }
+
+    #tap-btn:active {
+      transform: scale(0.93);
+      background: #e55f00;
+    }
+
+    #tap-btn.milestone {
+      animation: pulse 0.4s ease-out;
+    }
+
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255, 106, 0, 0.6); }
+      100% { box-shadow: 0 0 0 40px rgba(255, 106, 0, 0); }
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      background: #222;
+      border-radius: 99px;
+      height: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #FF6A00;
+      border-radius: 99px;
+      transition: width 0.2s ease;
+    }
+
+    .progress-label {
+      font-size: 12px;
+      color: #555;
+      text-align: right;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: #FF6A00;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 99px;
+      font-weight: 700;
+      font-size: 15px;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn:active { opacity: 0.8; }
+
+    .btn-primary {
+      background: #FF6A00;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .btn-secondary {
+      background: #222;
+      color: #aaa;
+      border: 1px solid #333;
+    }
+
+    /* ── Status messages ── */
+    .status {
+      font-size: 13px;
+      color: #666;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    .status.error { color: #ff4444; }
+    .status.success { color: #44ff88; }
+
+    #user-email {
+      font-size: 12px;
+      color: #444;
+      margin-top: 8px;
+    }
+
+    #signout-btn {
+      background: none;
+      border: none;
+      color: #444;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo">MOUNTAIN TWIG GAMES</div>
+
+  <!-- ── Toast notification ── -->
+  <div id="toast">+50 coins earned!</div>
+
+  <!-- ── Auth section ── -->
+  <div class="card" id="auth-section">
+    <h2 style="margin-bottom: 6px; font-size: 20px;">Sign in to play</h2>
+    <p style="color: #555; font-size: 13px; margin-bottom: 24px;">
+      Coins are saved to your account
+    </p>
+    <input type="email" id="email-input" placeholder="Your email address" />
+    <button class="btn btn-primary" onclick="sendMagicLink()">Send magic link</button>
+    <div class="status" id="auth-status"></div>
+  </div>
+
+  <!-- ── Game section ── -->
+  <div class="card" id="game-section">
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">Score</div>
+        <div class="stat-value" id="score-display">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Coins</div>
+        <div class="stat-value coin-value" id="coin-display">—</div>
+      </div>
+    </div>
+
+    <button id="tap-btn" onclick="tap()">TAP</button>
+
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+    </div>
+    <div class="progress-label" id="progress-label">0 / 10 taps to earn coins</div>
+
+    <div class="status" id="game-status"></div>
+    <div id="user-email"></div>
+    <button id="signout-btn" onclick="signOut()">Sign out</button>
+  </div>
+
+  <script>
+    // ── Config — update these with your real values ───────────────────────────
+    const SUPABASE_URL  = 'https://yianuzrujkwmgriyukok.supabase.co'
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpYW51enJ1amt3bWdyaXl1a29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3OTk3MTEsImV4cCI6MjA4OTM3NTcxMX0.5aVcn-V4KwAFjJmkl4v8VVMfj9Z_2jzX64xfyXxsotA'
+    const API_BASE      = 'http://localhost:3000'
+    const GAME_ID       = 'test-game'
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+
+    let score    = 0
+    let userId   = null
+    let token    = null
+    let granting = false
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+    async function boot() {
+      const { data: { session } } = await sbClient.auth.getSession()
+      if (session) {
+        await onSignedIn(session)
+      }
+
+      // Listen for auth state changes (magic link callback)
+      sbClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          await onSignedIn(session)
+        }
+      })
+    }
+
+    async function onSignedIn(session) {
+      userId = session.user.id
+      token  = session.access_token
+
+      // Register user + wallet on platform
+      try {
+        await apiPost('/api/auth/register', {})
+        setStatus('game-status', '', '')
+      } catch (e) {
+        setStatus('game-status', 'Could not connect to platform', 'error')
+      }
+
+      // Load balance
+      await refreshBalance()
+
+      // Show game
+      document.getElementById('auth-section').style.display = 'none'
+      document.getElementById('game-section').style.display = 'block'
+      document.getElementById('user-email').textContent = session.user.email
+
+      // Track session start
+      apiPost('/api/events', {
+        event:   'session_start',
+        game_id: GAME_ID,
+      }).catch(() => {})
+    }
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    async function sendMagicLink() {
+      const email = document.getElementById('email-input').value.trim()
+      if (!email) {
+        setStatus('auth-status', 'Please enter your email', 'error')
+        return
+      }
+
+      setStatus('auth-status', 'Sending magic link…', '')
+
+      const { error } = await sbClient.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.href }
+      })
+
+      if (error) {
+        setStatus('auth-status', 'Something went wrong — try again', 'error')
+      } else {
+        setStatus('auth-status', '✓ Check your email for the magic link!', 'success')
+      }
+    }
+
+    async function signOut() {
+      await sbClient.auth.signOut()
+      location.reload()
+    }
+
+    // ── Game loop ─────────────────────────────────────────────────────────────
+    async function tap() {
+      if (!userId) return
+
+      score++
+      document.getElementById('score-display').textContent = score
+
+      // Update progress bar (resets every 10 taps)
+      const progress = score % 10
+      const pct = progress === 0 ? 100 : progress * 10
+      document.getElementById('progress-bar').style.width = pct + '%'
+      document.getElementById('progress-label').textContent =
+        `${progress === 0 ? 10 : progress} / 10 taps to earn coins`
+
+      // Every 10 taps — grant 50 coins
+      if (score % 10 === 0) {
+        await grantCoins()
+      }
+    }
+
+    async function grantCoins() {
+      if (granting) return
+      granting = true
+
+      const milestoneId  = `tap-milestone-${score}`
+      const idempotencyKey = `level_complete-${userId}-${milestoneId}`
+
+      try {
+        const result = await apiPost('/api/rewards/grant', {
+          reason:          'level_complete',
+          amount:          50,
+          idempotency_key: idempotencyKey,
+          game_id:         GAME_ID,
+        })
+
+        if (result.ok) {
+          showToast(`+50 coins earned!`)
+          document.getElementById('tap-btn').classList.add('milestone')
+          setTimeout(() => {
+            document.getElementById('tap-btn').classList.remove('milestone')
+          }, 400)
+          await refreshBalance()
+        }
+      } catch (e) {
+        setStatus('game-status', 'Could not grant coins — check console', 'error')
+        console.error('Grant error:', e)
+      } finally {
+        granting = false
+      }
+    }
+
+    async function refreshBalance() {
+      try {
+        const data = await apiGet('/api/wallet')
+        document.getElementById('coin-display').textContent =
+          (data.balance ?? 0).toLocaleString()
+      } catch (e) {
+        document.getElementById('coin-display').textContent = '?'
+      }
+    }
+
+    // ── API helpers ───────────────────────────────────────────────────────────
+    async function apiGet(path) {
+      const res = await fetch(API_BASE + path, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error(`${res.status} ${path}`)
+      return res.json()
+    }
+
+    async function apiPost(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method:  'POST',
+        headers: {
+          Authorization:  `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error(`${res.status} ${path}`)
+      return res.json()
+    }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+    function showToast(msg) {
+      const t = document.getElementById('toast')
+      t.textContent = msg
+      t.classList.add('show')
+      setTimeout(() => t.classList.remove('show'), 2500)
+    }
+
+    function setStatus(id, msg, type) {
+      const el = document.getElementById(id)
+      el.textContent = msg
+      el.className = 'status ' + type
+    }
+
+    // ── Start ─────────────────────────────────────────────────────────────────
+    boot()
+  </script>
+</body>
+</html>
