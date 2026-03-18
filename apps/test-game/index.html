@@ -224,7 +224,7 @@
   <div class="logo">MOUNTAIN TWIG GAMES</div>
 
   <!-- ── Toast notification ── -->
-  <div id="toast">+50 coins earned!</div>
+  <div id="toast">+10 coins earned!</div>
 
   <!-- ── Auth section ── -->
   <div class="card" id="auth-section">
@@ -255,7 +255,7 @@
     <div class="progress-wrap">
       <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
     </div>
-    <div class="progress-label" id="progress-label">0 / 10 taps to earn coins</div>
+    <div class="progress-label" id="progress-label">0 / 1000 taps to earn coins</div>
 
     <div class="status" id="game-status"></div>
     <div id="user-email"></div>
@@ -353,15 +353,15 @@
       score++
       document.getElementById('score-display').textContent = score
 
-      // Update progress bar (resets every 10 taps)
-      const progress = score % 10
-      const pct = progress === 0 ? 100 : progress * 10
+      // Update progress bar (resets every 1000 taps)
+      const progress = score % 1000
+      const pct = progress === 0 ? 100 : (progress / 1000) * 100
       document.getElementById('progress-bar').style.width = pct + '%'
       document.getElementById('progress-label').textContent =
-        `${progress === 0 ? 10 : progress} / 10 taps to earn coins`
+        `${progress === 0 ? 1000 : progress} / 1000 taps to earn coins`
 
-      // Every 10 taps — grant 50 coins
-      if (score % 10 === 0) {
+      // Every 1000 taps — grant 10 coins
+      if (score % 1000 === 0) {
         await grantCoins()
       }
     }
@@ -376,13 +376,13 @@
       try {
         const result = await apiPost('/api/rewards/grant', {
           reason:          'level_complete',
-          amount:          50,
+          amount:          10,
           idempotency_key: idempotencyKey,
           game_id:         GAME_ID,
         })
 
         if (result.ok) {
-          showToast(`+50 coins earned!`)
+          showToast(`+10 coins earned!`)
           document.getElementById('tap-btn').classList.add('milestone')
           setTimeout(() => {
             document.getElementById('tap-btn').classList.remove('milestone')
