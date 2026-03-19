@@ -322,6 +322,7 @@
       }
 
       await refreshBalance()
+      await loadAd()
 
       // Claim daily login
       try {
@@ -469,6 +470,32 @@
       const el = document.getElementById(id)
       el.textContent = msg
       el.className = 'status ' + type
+    }
+
+    async function loadAd() {
+      try {
+        const ad = await apiGet('/api/ads?game_id=test-game')
+        if (!ad) return
+    
+        const existing = document.getElementById('ad-box')
+        if (existing) return
+    
+        const adDiv = document.createElement('div')
+        adDiv.id = 'ad-box'
+        adDiv.style.cssText = 'margin-top:12px;padding:14px 16px;background:#1a1a2e;border:1px solid #6A1B9A;border-radius:12px;text-align:center;cursor:pointer'
+        adDiv.innerHTML = `
+          <p style="font-size:12px;color:#888;margin-bottom:6px">FEATURED GAME</p>
+          <p style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px">${ad.game_name}</p>
+          <p style="font-size:13px;color:#FF6A00;font-weight:600">+${ad.reward_coins} coins to play</p>
+          <div style="margin-top:10px;padding:8px 20px;background:#6A1B9A;border-radius:8px;color:#fff;font-size:13px;font-weight:700">Play now</div>
+        `
+        adDiv.onclick = () => {
+          window.open(ad.deep_link_url, '_blank')
+        }
+        document.getElementById('game-section').appendChild(adDiv)
+      } catch(e) {
+        console.log('Ad load failed:', e)
+      }
     }
 
     // ── Start ─────────────────────────────────────────────────────────────────
