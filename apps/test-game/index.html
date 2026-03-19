@@ -323,6 +323,20 @@
 
       await refreshBalance()
 
+      // Claim daily login
+      try {
+        const daily = await apiPost('/api/rewards/daily-login', {})
+        if (daily.claimed) {
+          const msg = daily.bonus > 0
+            ? `🔥 Day ${daily.streak} streak! +${100 + daily.bonus} coins`
+            : `🔥 Daily login! +100 coins`
+          showToast(msg)
+          await refreshBalance()
+        }
+      } catch (e) {
+        console.log('Daily login failed:', e)
+      }
+
       document.getElementById('auth-section').style.display = 'none'
       document.getElementById('game-section').style.display = 'block'
       document.getElementById('user-email').textContent = session.user.email
