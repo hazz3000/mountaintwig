@@ -3,6 +3,16 @@ import { db, wallets, rewardLedger } from '@mtwg/db'
 import { eq, desc } from 'drizzle-orm'
 import { getAuthUser } from '@/lib/supabase'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders })
+}
+
 export async function GET(req: NextRequest) {
   const user = await getAuthUser(req)
   if (!user) {
@@ -18,9 +28,7 @@ export async function GET(req: NextRequest) {
       .limit(20),
   ])
 
-  return NextResponse.json({
-    balance:  wallet[0]?.softBalance ?? 0,
-    currency: 'coins',
-    recent,
-  })
+  const balance = wallet[0]?.softBalance ?? 0
+
+  return NextResponse.json({ balance, currency: 'coins', recent }, { headers: corsHeaders })
 }

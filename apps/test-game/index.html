@@ -296,23 +296,37 @@
       userId = session.user.id
       token  = session.access_token
 
-      // Register user + wallet on platform
       try {
-        await apiPost('/api/auth/register', {})
-        setStatus('game-status', '', '')
+        const data = await apiPost('/api/auth/register', {})
+        
+        // Show referral code if returned
+        if (data.referralCode) {
+          const existing = document.getElementById('referral-box')
+          if (!existing) {
+            const referDiv = document.createElement('div')
+            referDiv.id = 'referral-box'
+            referDiv.style.cssText = 'margin-top:16px;padding:12px 16px;background:#1a1a1a;border:1px solid #333;border-radius:12px;font-size:13px;color:#aaa;text-align:center;cursor:pointer'
+            referDiv.innerHTML = `Your referral code: <strong style="color:#FF6A00;letter-spacing:3px;font-size:15px">${data.referralCode}</strong><br><span style="font-size:11px;color:#555;margin-top:4px;display:block">Tap to copy</span>`
+            referDiv.onclick = () => {
+              navigator.clipboard.writeText(`https://mountaintwìggames.com/r/${data.referralCode}`)
+              referDiv.innerHTML = `<strong style="color:#44ff88">✓ Link copied!</strong>`
+              setTimeout(() => {
+                referDiv.innerHTML = `Your referral code: <strong style="color:#FF6A00;letter-spacing:3px;font-size:15px">${data.referralCode}</strong><br><span style="font-size:11px;color:#555;margin-top:4px;display:block">Tap to copy</span>`
+              }, 2000)
+            }
+            document.getElementById('game-section').appendChild(referDiv)
+          }
+        }
       } catch (e) {
         setStatus('game-status', 'Could not connect to platform', 'error')
       }
 
-      // Load balance
       await refreshBalance()
 
-      // Show game
       document.getElementById('auth-section').style.display = 'none'
       document.getElementById('game-section').style.display = 'block'
       document.getElementById('user-email').textContent = session.user.email
 
-      // Track session start
       apiPost('/api/events', {
         event:   'session_start',
         game_id: GAME_ID,

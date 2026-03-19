@@ -4,6 +4,16 @@ import { eq, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthUser } from '@/lib/supabase'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders })
+}
+
 const GrantSchema = z.object({
   reason: z.enum([
     'install_reward', 'first_session', 'level_complete',
@@ -19,14 +29,14 @@ const GrantSchema = z.object({
 export async function POST(req: NextRequest) {
   const user = await getAuthUser(req)
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
   }
 
   const body = GrantSchema.safeParse(await req.json())
   if (!body.success) {
     return NextResponse.json(
       { error: 'Invalid request', issues: body.error.issues },
-      { status: 400 }
+      { status: 400, headers: corsHeaders }
     )
   }
 
@@ -60,13 +70,13 @@ export async function POST(req: NextRequest) {
         })
     })
 
-    return NextResponse.json({ ok: true, amount })
+    return NextResponse.json({ ok: true, amount }, { headers: corsHeaders })
 
   } catch (err: any) {
     // Postgres unique violation code — idempotency key already exists
     // This is NOT an error: it means the grant was already processed.
     if (err?.code === '23505') {
-      return NextResponse.json({ ok: true, duplicate: true })
+      return NextResponse.json({ ok: true, duplicate: true }, { headers: corsHeaders })
     }
     console.error('[/api/rewards/grant] Unexpected error:', err)
     throw err
